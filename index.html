@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Description Auto Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+
+        .main-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .upload-section label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .upload-box {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px 20px;
+            background: #f8f9ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-box:hover {
+            border-color: #5568d3;
+            background: #f0f4ff;
+        }
+
+        .upload-box.dragover {
+            border-color: #764ba2;
+            background: #eef0ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .processing-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .progress-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            background: white;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .status-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-item.success {
+            color: #2e7d32;
+        }
+
+        .status-item.error {
+            color: #c62828;
+        }
+
+        .status-item.processing {
+            color: #1976d2;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            grid-column: 1 / -1;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            border-color: #5568d3;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #1976d2;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .success-box {
+            background: #c8e6c9;
+            border-left: 4px solid #2e7d32;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #1b5e20;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Business Description Auto Generator</h1>
+            <p>Upload Excel → Auto generate → Download (One click!)</p>
+        </div>
+
+        <div class="main-panel">
+            <div class="upload-section">
+                <label>📁 Upload Your Excel File</label>
+                <div class="upload-box" id="uploadBox" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('excelFile').click()">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">Drag & drop your Excel file here</div>
+                    <div class="upload-text">or click to select</div>
+                    <div class="upload-subtext">Supports .xlsx, .xls formats</div>
+                </div>
+                <input type="file" id="excelFile" accept=".xlsx,.xls" />
+            </div>
+
+            <div class="info-box">
+                ℹ️ The tool will automatically search for information about each company and generate English business descriptions. This may take a few minutes depending on the number of companies.
+            </div>
+
+            <div class="processing-section" id="processingSection">
+                <div class="progress-card">
+                    <div class="progress-title">Processing Progress</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progressText">0 / 0 companies</span>
+                        <span id="timeEstimate">Estimating...</span>
+                    </div>
+                </div>
+
+                <div class="progress-card">
+                    <div class="progress-title">Processing Log</div>
+                    <div class="status-list" id="statusList"></div>
+                </div>
+            </div>
+
+            <div class="result-section" id="resultSection">
+                <div class="success-box">
+                    ✅ All descriptions generated successfully!
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">Summary</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-number" id="totalCompanies">0</div>
+                            <div class="stat-label">Total Companies</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="successCount">0</div>
+                            <div class="stat-label">Generated</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="failCount">0</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="avgChars">0</div>
+                            <div class="stat-label">Avg. Characters</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="location.reload()">🔄 Process Another File</button>
+                    <button class="btn-primary" onclick="downloadExcel()">💾 Download Excel File</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCompanies = [];
+        let workbook = null;
+        let processedData = [];
+        let startTime = 0;
+
+        // Drag and drop handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('uploadBox').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            document.getElementById('uploadBox').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('uploadBox').classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                loadExcel(files[0]);
+            }
+        }
+
+        document.getElementById('excelFile').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                loadExcel(e.target.files[0]);
+            }
+        });
+
+        function loadExcel(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    allCompanies = jsonData.map((row, idx) => ({
+                        index: idx,
+                        name: row['客戶姓名'] || '',
+                        account: row['複委託帳號'] || '',
+                        remarks: row['備註說明'] || '',
+                        industry: extractField(row['備註說明'], '行業別'),
+                        serviceOrg: extractField(row['備註說明'], '服務機構'),
+                        revenue: extractField(row['備註說明'], '投資資金來源'),
+                        description: row['Business Description'] || ''
+                    })).filter(c => c.serviceOrg);
+
+                    if (allCompanies.length === 0) {
+                        alert('No valid companies found in the Excel file');
+                        return;
+                    }
+
+                    startProcessing();
+                } catch (e) {
+                    alert('Error reading Excel file: ' + e.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function extractField(text, fieldName) {
+            if (!text) return '';
+            const regex = new RegExp(`${fieldName}[：:][\\s]*([^\\n]+)`);
+            const match = text.match(regex);
+            return match ? match[1].trim() : '';
+        }
+
+        async function startProcessing() {
+            document.getElementById('uploadBox').style.display = 'none';
+            document.getElementById('processingSection').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            processedData = [];
+            startTime = Date.now();
+
+            for (let i = 0; i < allCompanies.length; i++) {
+                const company = allCompanies[i];
+                updateProgress(i, allCompanies.length);
+                
+                try {
+                    addLog(`Processing: ${company.serviceOrg}...`, 'processing');
+                    const description = await generateDescription(company);
+                    
+                    processedData.push({
+                        ...company,
+                        description: description,
+                        charCount: description.length,
+                        status: 'success'
+                    });
+                    
+                    addLog(`✅ ${company.serviceOrg} (${description.length} chars)`, 'success');
+                } catch (e) {
+                    processedData.push({
+                        ...company,
+                        description: '',
+                        charCount: 0,
+                        status: 'error'
+                    });
+                    
+                    addLog(`❌ ${company.serviceOrg}: ${e.message}`, 'error');
+                }
+
+                // Add small delay between requests to avoid rate limiting
+                if (i < allCompanies.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+
+            updateProgress(allCompanies.length, allCompanies.length);
+            showResults();
+        }
+
+        async function generateDescription(company) {
+            const prompt = `Generate a professional English business description for this Taiwan company. 
+
+CRITICAL REQUIREMENTS:
+- MUST be between 150-256 characters total (complete and natural, NOT truncated)
+- MUST include: industry sector, country (Taiwan), main products/services, revenue source
+- MUST be conversational tone, no bullet points
+- MUST contain ONLY ASCII characters (no Chinese, no full-width symbols, no special symbols)
+- MUST be ONE complete sentence or naturally flowing paragraph
+- MUST NOT be cut off mid-word or mid-sentence
+
+Company: ${company.serviceOrg}
+Industry: ${company.industry}
+Revenue Source: ${company.revenue}
+
+Generate ONLY the description (nothing else, no quotes, no labels). Make sure it flows naturally and fits completely within 256 characters:`;
+
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 300,
+                    messages: [{ role: 'user', content: prompt }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('API error: ' + response.status);
+            }
+
+            const data = await response.json();
+            let desc = data.content[0].text.trim();
+
+            // Remove quotes if Claude wrapped it
+            desc = desc.replace(/^["']|["']$/g, '').trim();
+
+            // Remove all non-ASCII characters
+            desc = desc.replace(/[^\x00-\x7F]/g, '').trim();
+            
+            // Verify it's 256 or less and complete
+            if (desc.length > 256) {
+                // If still over, try to cut at a natural break point (period or comma)
+                let truncated = desc.substring(0, 256);
+                let lastPeriod = truncated.lastIndexOf('.');
+                let lastComma = truncated.lastIndexOf(',');
+                let lastSpace = truncated.lastIndexOf(' ');
+                
+                if (lastPeriod > 200) {
+                    desc = truncated.substring(0, lastPeriod + 1).trim();
+                } else if (lastComma > 200) {
+                    desc = truncated.substring(0, lastComma + 1).trim();
+                } else if (lastSpace > 200) {
+                    desc = truncated.substring(0, lastSpace).trim();
+                } else {
+                    desc = truncated.trim();
+                }
+            }
+
+            return desc;
+        }
+
+        function updateProgress(current, total) {
+            const percentage = (current / total) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${current} / ${total} companies`;
+
+            if (current > 0) {
+                const elapsed = Date.now() - startTime;
+                const avgTime = elapsed / current;
+                const remaining = (total - current) * avgTime;
+                const minutes = Math.ceil(remaining / 60000);
+                document.getElementById('timeEstimate').textContent = `~${minutes}min remaining`;
+            }
+        }
+
+        function addLog(message, type) {
+            const statusList = document.getElementById('statusList');
+            const item = document.createElement('div');
+            item.className = 'status-item ' + type;
+            item.textContent = message;
+            statusList.appendChild(item);
+            statusList.scrollTop = statusList.scrollHeight;
+        }
+
+        function showResults() {
+            document.getElementById('processingSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+
+            const successCount = processedData.filter(d => d.status === 'success').length;
+            const failCount = processedData.filter(d => d.status === 'error').length;
+            const avgChars = Math.round(
+                processedData.filter(d => d.charCount > 0).reduce((sum, d) => sum + d.charCount, 0) / 
+                Math.max(successCount, 1)
+            );
+
+            document.getElementById('totalCompanies').textContent = allCompanies.length;
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('failCount').textContent = failCount;
+            document.getElementById('avgChars').textContent = avgChars;
+        }
+
+        function downloadExcel() {
+            const ws = XLSX.utils.json_to_sheet(processedData.map(c => ({
+                '客戶身分證': c.index,
+                '客戶姓名': c.name,
+                '複委託帳號': c.account,
+                '備註說明': `行業別：${c.industry}  服務機構：${c.serviceOrg}  投資資金來源：${c.revenue}`,
+                'Business Description': c.description,
+                '字元數': c.charCount
+            })));
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 12 },  // 客戶身分證
+                { wch: 12 },  // 客戶姓名
+                { wch: 15 },  // 複委託帳號
+                { wch: 50 },  // 備註說明
+                { wch: 40 },  // Business Description
+                { wch: 8 }    // 字元數
+            ];
+
+            if (!workbook.Sheets['補雇主資料明細']) {
+                workbook.Sheets['補雇主資料明細'] = ws;
+            } else {
+                workbook.Sheets['補雇主資料明細'] = ws;
+            }
+
+            XLSX.writeFile(workbook, '補雇主資料明細_completed.xlsx');
+        }
+    </script>
+</body>
+</html>
